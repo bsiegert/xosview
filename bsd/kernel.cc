@@ -1545,9 +1545,12 @@ BSDHasBattery() {
 	if ( prop_dictionary_count(pdict) == 0 )
 		return false;
 	pobj = prop_dictionary_get(pdict, "acpibat0"); // just check for 1st battery
-	if ( prop_object_type(pobj) != PROP_TYPE_ARRAY )
-		return false;
-	return true;
+	if ( prop_object_type(pobj) == PROP_TYPE_ARRAY )
+		return true;
+	pobj = prop_dictionary_get(pdict, "cwfg0"); // NetBSD/evbarm
+	if ( prop_object_type(pobj) == PROP_TYPE_ARRAY )
+		return true;
+	return false;
 #elif defined(XOSVIEW_OPENBSD)
 	// check if we can get full capacity of the 1st battery
 	float val = -1.0;
@@ -1620,7 +1623,7 @@ BSDGetBatteryInfo(int *remaining, unsigned int *state) {
 	while ( (pobj = prop_object_iterator_next(piter)) ) {
 		int present = 0, capacity = 0, charge = 0, low = 0, crit = 0;
 		name = prop_dictionary_keysym_cstring_nocopy((prop_dictionary_keysym_t)pobj);
-		if ( strncmp(name, "acpibat", 7) )
+		if ( strncmp(name, "acpibat", 7) && strncmp(name, "cwfg", 4) )
 			continue;
 		parray = (prop_array_t)prop_dictionary_get_keysym(pdict, (prop_dictionary_keysym_t)pobj);
 		if ( prop_object_type(parray) != PROP_TYPE_ARRAY )
